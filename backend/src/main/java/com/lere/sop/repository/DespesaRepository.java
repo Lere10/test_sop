@@ -6,6 +6,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.Optional;
 
 public interface DespesaRepository extends JpaRepository<Despesa, String> {
-    Optional<Despesa> findByProtocoloAndCompetencia(String protocolo, String competencia);
+    Optional<Despesa> findById(String protocolo);
 }
 

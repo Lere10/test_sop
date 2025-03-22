@@ -21,13 +21,11 @@ public class DespesaController {
         return ResponseEntity.ok(despesaService.listarTodas());
     }
 
-    @GetMapping("/{competencia}")
-    public ResponseEntity<DespesaDTO> buscarPorProtocoloECompetencia(
-            @PathVariable String protocolo,
-            @PathVariable String competencia) {
-        DespesaDTO dto = despesaService.buscarPorProtocoloECompetencia(protocolo, competencia);
-        return ResponseEntity.ok(dto);
-    }
+    @GetMapping("/{protocolo}")
+public ResponseEntity<DespesaDTO> buscarPorProtocolo(@PathVariable String protocolo) {
+    DespesaDTO dto = despesaService.buscarPorProtocolo(protocolo);
+    return ResponseEntity.ok(dto);
+}
 
     @PostMapping
     public ResponseEntity<Despesa> criar(@RequestBody Despesa despesa) {

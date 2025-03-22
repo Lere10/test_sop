@@ -23,23 +23,23 @@ public class DespesaService {
         return despesaRepository.findAll();
     }
 
-    public DespesaDTO buscarPorProtocoloECompetencia(String protocolo, String competencia) {
-        Despesa despesa = despesaRepository.findByProtocoloAndCompetencia(protocolo, competencia)
-                .orElseThrow(() -> new RuntimeException("Despesa não encontrada"));
+    public DespesaDTO buscarPorProtocolo(String protocolo) {
+    Despesa despesa = despesaRepository.findById(protocolo)
+            .orElseThrow(() -> new RuntimeException("Despesa não encontrada"));
 
-        DespesaDTO dto = new DespesaDTO();
-        dto.setProtocolo(despesa.getProtocolo());
-        dto.setCompetencia(despesa.getCompetencia());
-        dto.setCredor(despesa.getCredor());
-        dto.setValorDespesa(despesa.getValorDespesa());
-        dto.setDescricao(despesa.getDescricao());
-        dto.setTipoDespesa(despesa.getTipoDespesa());
-        dto.setStatus(despesa.getStatus());
-        dto.setDataProtocolo(despesa.getDataProtocolo());
-        dto.setDataVencimento(despesa.getDataVencimento());
+    DespesaDTO dto = new DespesaDTO();
+    dto.setProtocolo(despesa.getProtocolo());
+    dto.setCompetencia(despesa.getCompetencia());
+    dto.setCredor(despesa.getCredor());
+    dto.setValorDespesa(despesa.getValorDespesa());
+    dto.setDescricao(despesa.getDescricao());
+    dto.setTipoDespesa(despesa.getTipoDespesa());
+    dto.setStatus(despesa.getStatus());
+    dto.setDataProtocolo(despesa.getDataProtocolo());
+    dto.setDataVencimento(despesa.getDataVencimento());
 
-        return dto;
-    }
+    return dto;
+}
 
     public void deletarPorProtocolo(String protocolo) {
         despesaRepository.deleteById(protocolo);
