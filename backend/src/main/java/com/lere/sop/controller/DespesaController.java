@@ -21,7 +21,7 @@ public class DespesaController {
         return ResponseEntity.ok(despesaService.listarTodas());
     }
 
-    @GetMapping("/{protocolo}")
+   @GetMapping("/{protocolo}")
 public ResponseEntity<DespesaDTO> buscarPorProtocolo(@PathVariable String protocolo) {
     DespesaDTO dto = despesaService.buscarPorProtocolo(protocolo);
     return ResponseEntity.ok(dto);

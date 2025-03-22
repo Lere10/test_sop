@@ -6,8 +6,12 @@ import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
 
 
+
 import java.math.BigDecimal;
 import java.time.LocalDate;
+import java.util.List;
+import java.util.ArrayList;
+
 
 @Entity
 @Table(name = "despesas")
@@ -43,4 +47,8 @@ public class Despesa {
 
     @Column(name = "data_vencimento")
     private LocalDate dataVencimento;
+
+    @OneToMany(mappedBy = "despesa", cascade = CascadeType.ALL, orphanRemoval = true)
+private List<Empenho> empenhos = new ArrayList<>();
+
 }

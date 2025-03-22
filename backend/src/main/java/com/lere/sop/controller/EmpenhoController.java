@@ -17,28 +17,28 @@ public class EmpenhoController {
     @Autowired
     private EmpenhoService empenhoService;
 
-    @PostMapping
-    public ResponseEntity<Empenho> criar(@RequestBody EmpenhoDTO dto) {
-        Empenho empenho = empenhoService.salvar(dto);
-        return ResponseEntity.ok(empenho);
-    }
+   @PostMapping
+public ResponseEntity<EmpenhoDTO> criar(@RequestBody EmpenhoDTO dto) {
+    EmpenhoDTO empenhoSalvo = empenhoService.salvar(dto);
+    return ResponseEntity.ok(empenhoSalvo);
+}
 
+
+    // @GetMapping
+    // public ResponseEntity<List<Empenho>> listarTodos() {
+    //     return ResponseEntity.ok(empenhoService.listarTodos());
+    // }
     @GetMapping
-    public ResponseEntity<List<Empenho>> listarTodos() {
-        return ResponseEntity.ok(empenhoService.listarTodos());
-    }
+        public ResponseEntity<List<EmpenhoDTO>> listarTodos() {
+            return ResponseEntity.ok(empenhoService.listarTodos());
+}
+
 
     @GetMapping("/{id}")
 public ResponseEntity<EmpenhoDTO> buscarPorId(@PathVariable("id") UUID id) {
     EmpenhoDTO dto = empenhoService.buscarPorId(id);
     return ResponseEntity.ok(dto);
 }
-
-
-    // @GetMapping("/{numeroEmpenho}")
-    // public ResponseEntity<Empenho> buscarPorId(@PathVariable UUID numeroEmpenho) {
-    //     return ResponseEntity.ok(empenhoService.buscarPorId(numeroEmpenho));
-    // }
 
     @DeleteMapping("/{numeroEmpenho}")
     public ResponseEntity<Void> deletar(@PathVariable UUID numeroEmpenho) {

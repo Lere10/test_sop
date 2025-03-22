@@ -7,5 +7,6 @@ import java.util.Optional;
 
 public interface DespesaRepository extends JpaRepository<Despesa, String> {
     Optional<Despesa> findById(String protocolo);
+
 }
 
