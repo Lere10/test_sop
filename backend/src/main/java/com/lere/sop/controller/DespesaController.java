@@ -1,5 +1,6 @@
 package com.lere.sop.controller;
 
+import com.lere.sop.dto.DespesaDTO;
 import com.lere.sop.entity.Despesa;
 import com.lere.sop.service.DespesaService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,21 +18,21 @@ public class DespesaController {
 
     @GetMapping
     public ResponseEntity<List<Despesa>> listarTodas() {
-        List<Despesa> despesas = despesaService.listarTodas();
-        return ResponseEntity.ok(despesas);
+        return ResponseEntity.ok(despesaService.listarTodas());
     }
 
-    @GetMapping("/{protocolo}")
-    public ResponseEntity<Despesa> buscarPorProtocolo(@PathVariable String protocolo) {
-        return despesaService.buscarPorProtocolo(protocolo)
-                .map(ResponseEntity::ok)
-                .orElse(ResponseEntity.notFound().build());
+    @GetMapping("/{competencia}")
+    public ResponseEntity<DespesaDTO> buscarPorProtocoloECompetencia(
+            @PathVariable String protocolo,
+            @PathVariable String competencia) {
+        DespesaDTO dto = despesaService.buscarPorProtocoloECompetencia(protocolo, competencia);
+        return ResponseEntity.ok(dto);
     }
 
     @PostMapping
     public ResponseEntity<Despesa> criar(@RequestBody Despesa despesa) {
-        Despesa novaDespesa = despesaService.salvar(despesa);
-        return ResponseEntity.ok(novaDespesa);
+        Despesa nova = despesaService.salvar(despesa);
+        return ResponseEntity.ok(nova);
     }
 
     @DeleteMapping("/{protocolo}")
