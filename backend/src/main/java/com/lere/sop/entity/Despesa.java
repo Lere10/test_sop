@@ -4,7 +4,7 @@ import jakarta.persistence.*;
 import lombok.Data;
 import org.hibernate.annotations.GenericGenerator;
 import java.time.LocalDateTime;
-
+import com.fasterxml.jackson.annotation.JsonManagedReference;
 
 
 import java.math.BigDecimal;
@@ -49,6 +49,7 @@ public class Despesa {
     private LocalDate dataVencimento;
 
     @OneToMany(mappedBy = "despesa", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonManagedReference
 private List<Empenho> empenhos = new ArrayList<>();
 
 }

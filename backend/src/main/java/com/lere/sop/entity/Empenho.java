@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.hibernate.annotations.GenericGenerator;
 import java.util.UUID;
+import com.fasterxml.jackson.annotation.JsonBackReference;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
@@ -31,5 +32,6 @@ public class Empenho {
 
     @ManyToOne(optional = false)
     @JoinColumn(name = "protocolo_despesa", referencedColumnName = "protocolo", nullable = false)
+    @JsonBackReference
     private Despesa despesa;
 }
