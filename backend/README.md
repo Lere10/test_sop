@@ -111,5 +111,5 @@ O diagrama está em `docs/er_diagram_sop.png`.
 
 ## 🛠️ Desenvolvido por
 
-- [Seu Nome](https://github.com/seu-usuario)
-- Projeto da SOP - Controle Financeiro
+- [Lucas Lere](https://github.com/Lere10)
+- Projeto da SOP - Controle de Despesas/Empenhos/Pagamentos - Teste técnico
