@@ -9,7 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
 import org.springframework.http.HttpStatus;
-
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.UUID;
 
@@ -23,8 +23,28 @@ public class EmpenhoService {
     private DespesaRepository despesaRepository;
 
     public EmpenhoDTO salvar(EmpenhoDTO dto) {
+
+if (dto.getValorEmpenho() == null || dto.getValorEmpenho().compareTo(BigDecimal.ZERO) <= 0) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O valor do empenho deve ser maior que zero.");
+    }
+
         Despesa despesa = despesaRepository.findById(dto.getProtocoloDespesa())
                 .orElseThrow(() -> new RuntimeException("Despesa não encontrada para o protocolo informado."));
+
+// Regra que valida se a soma dos empenhos não ultrapassa o valor total da despesa
+
+        BigDecimal somaEmpenhosExistentes = despesa.getEmpenhos().stream()
+                .map(Empenho::getValorEmpenho)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+        BigDecimal novoValorTotal = somaEmpenhosExistentes.add(dto.getValorEmpenho());
+
+        if (novoValorTotal.compareTo(despesa.getValorDespesa()) > 0) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+                    "A soma dos valores dos empenhos ultrapassa o valor total da despesa.");
+        }
+
+// fim da regra de negócio
 
         Empenho empenho = new Empenho();
         empenho.setDataEmpenho(dto.getDataEmpenho());
@@ -36,16 +56,12 @@ public class EmpenhoService {
         return toDTO(salvo);
     }
 
-    // public List<Empenho> listarTodos() {
-    //     return empenhoRepository.findAll();
-    // }
-
     public List<EmpenhoDTO> listarTodos() {
-    return empenhoRepository.findAll()
-            .stream()
-            .map(this::toDTO)
-            .toList();
-}
+        return empenhoRepository.findAll()
+                .stream()
+                .map(this::toDTO)
+                .toList();
+    }
 
     public void deletar(UUID numeroEmpenho) {
         empenhoRepository.deleteById(numeroEmpenho);

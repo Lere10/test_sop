@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.web.server.ResponseStatusException;
+import java.math.BigDecimal;
 
 import java.util.List;
 import java.util.UUID;
@@ -23,10 +24,26 @@ public class PagamentoService {
     @Autowired
     private EmpenhoRepository empenhoRepository;
 
+
     public PagamentoDTO salvar(PagamentoDTO dto) {
         UUID numeroEmpenhoUUID = UUID.fromString(dto.getNumeroEmpenho());
 Empenho empenho = empenhoRepository.findById(numeroEmpenhoUUID)
         .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Empenho não encontrado"));
+
+          if (dto.getValorPagamento() == null || dto.getValorPagamento().compareTo(BigDecimal.ZERO) == 0) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "O valor do pagamento não pode ser zero.");
+    }
+
+         BigDecimal totalPagamentos = pagamentoRepository.findByEmpenho(empenho).stream()
+            .map(Pagamento::getValorPagamento)
+            .reduce(BigDecimal.ZERO, BigDecimal::add);
+
+    BigDecimal valorNovoPagamento = dto.getValorPagamento();
+    BigDecimal valorEmpenho = empenho.getValorEmpenho();
+
+    if (totalPagamentos.add(valorNovoPagamento).compareTo(valorEmpenho) > 0) {
+        throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "A soma dos pagamentos ultrapassa o valor do empenho.");
+    }
 
         Pagamento pagamento = new Pagamento();
         pagamento.setDataPagamento(dto.getDataPagamento());
@@ -37,6 +54,7 @@ Empenho empenho = empenhoRepository.findById(numeroEmpenhoUUID)
         Pagamento salvo = pagamentoRepository.save(pagamento);
         return toDTO(salvo);
     }
+
 
     public List<PagamentoDTO> listarTodos() {
         return pagamentoRepository.findAll()
