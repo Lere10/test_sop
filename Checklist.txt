@@ -1,0 +1,111 @@
+Lembrar de excluir ao final do desenvolvimento do projeto!!
+
+✅ Front-End
+
+A parte front-end ainda será iniciada, então os próximos passos são:
+
+ Criar o projeto com Next.js
+
+ Instalar axios e redux com o boilerplate inicial
+
+ Criar uma store (Redux) para armazenar as listas de Despesas, Empenhos e Pagamentos
+
+ Criar as páginas para:
+
+Cadastro e listagem de Despesas
+
+Cadastro e listagem de Empenhos vinculados a Despesas
+
+Cadastro e listagem de Pagamentos vinculados a Empenhos
+
+ Testar a comunicação com o back-end
+
+ Adicionar README com instruções
+
+
+------------------------
+
+Escopo sem as opcionais:
+Prontinho, com isso temos então o backend do projeto finalizado? Vamos recapitular o escopo do projeto:
+
+Descrição da Aplicação:
+  O controle financeiro da SOP é realizado de forma resumida por três entidades de negócio:
+ 
+  Despesa: Que agrega informações referente aos processos financeiros da instituição.
+ 
+  Empenho: Que garante o comprometimento do governo em executar a dívida referente as despesas.
+ 
+  Pagamento: Que efetiva a execução das dívidas da instituição.
+ 
+  Dessa forma, desenvolva um sistema que permitirá o cadastro, visualização, edição e exclusão dessas entidades. Desde que respeite as especificidades de cada entidade. 
+ 
+Regras de Negócio:
+ 
+  Despesa:
+  - Deve conter as seguintes informações:
+    - Número de protocolo
+    - Tipo de despesa
+    - Data do protocolo (dd/MM/yyyy HH:mm)
+    - Data de vencimento (dd/MM/yyyy)
+    - Credor da despesa
+    - Descrição da despesa
+    - Valor da despesa
+   
+  - Cada número de protocolo deve ser único.
+  - Pode conter nenhum ou vários Empenhos.
+ 
+ 
+  Empenho:
+  - Deve conter as seguintes informações:
+    - Número do empenho
+    - Data do empenho (dd/MM/yyyy)
+    - Valor do empenho
+    - Observação
+  - Cada número do empenho deve ser único.
+  - Pode conter nenhum ou vários Pagamentos.
+  - Obrigatoriamente pertencente à uma Despesa, e apenas uma.
+
+ 
+  Pagamento:
+  - Deve conter as seguintes informações:
+    - Número do pagamento
+    - Data do pagamento (dd/MM/yyyy)
+    - Valor do pagamento
+    - Observação
+  - Cada número do pagamento deve ser único.
+  - Obrigatoriamente pertencente à um Empenho, e apenas um.
+  
+  
+  Informações Adicionais:
+    - A soma dos valores dos Empenhos de uma Despesa não deve ultrapassar o valor da mesma.
+    - A soma dos valores dos Pagamentos de um Empenho não deve ultrapassar o valor do mesmo.
+    - Não deve ser permitido excluir um Empenho que tenha ao menos um Pagamento associado.
+    - Não deve ser permitido excluir uma Despesa que tenha ao menos um Empenho associado.
+ 
+Requisitos Técnicos da Aplicação:
+-> Front-End:
+  Obrigatórios:
+  - Utilizar Next.js como framework.
+  - Utilizar Axios para tratar requisições.
+  - Utilizar Redux para gerenciamento de estados.
+  - Ter um README com instruções do projeto.
+ 
+ 
+-> Back-End:
+  Obrigatórios:
+  - Utilizar SpringBoot como framework.
+  - Utilizar JPA.
+  - Utilizar DTO's como design pattern conforme necessidade.
+  - Ter um README com instruções do projeto.
+  
+ 
+-> Banco de Dados:
+  Obrigatório:
+  - Utilizar o SGBD PostgreSQL.
+  - Enviar todos os scripts utilizados no desenvolvimento juntamente ao projeto de back-end em um arquivo .sql.
+  - Desenvolver um diagrama de entidade-relacionamento.
+ 
+-> Versionamento no GitHub:
+  Obrigatório:
+  - Todos os projetos devem estar públicos.
+  - Utilizem commits com prefixos que façam sentido (feat,fix,build...).
