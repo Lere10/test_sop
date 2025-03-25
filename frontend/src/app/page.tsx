@@ -5,9 +5,11 @@ import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/store'
 import { addDespesa, removeDespesa, setDespesas } from '@/features/despesa/despesaSlice'
+import { setEmpenhos } from '@/features/empenho/empenhoSlice'
 import Modal from '@/components/Modal'
 import trashIcon from '../../public/icons/trash.png'
-import { getDespesas, getDespesaById, criarDespesa, deletarDespesa } from '@/api/despesas'
+import { getDespesas, criarDespesa, deletarDespesa } from '@/api/despesas'
+import { getEmpenhos } from '@/api/empenhos'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -22,6 +24,7 @@ export default function HomePage() {
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [despesaSelecionada, setDespesaSelecionada] = useState<string | null>(null)
   const [temEmpenhos, setTemEmpenhos] = useState(false)
+  const [loadingNavegacao, setLoadingNavegacao] = useState(false)
 
   const [valor, setValor] = useState('R$ 0,00')
   const [formData, setFormData] = useState({
@@ -34,15 +37,19 @@ export default function HomePage() {
   })
 
   useEffect(() => {
-    async function fetchDespesas() {
+    async function fetchData() {
       try {
-        const data = await getDespesas()
-        dispatch(setDespesas(data))
+        const [despesasData, empenhosData] = await Promise.all([
+          getDespesas(),
+          getEmpenhos()
+        ])
+        dispatch(setDespesas(despesasData))
+        dispatch(setEmpenhos(empenhosData))
       } catch (error) {
-        console.error('Erro ao carregar despesas:', error)
+        console.error('Erro ao carregar dados iniciais:', error)
       }
     }
-    fetchDespesas()
+    fetchData()
   }, [dispatch])
 
   const preencherCamposIniciais = () => {
@@ -112,6 +119,7 @@ export default function HomePage() {
   }
 
   const handleAbrirEmpenhos = (protocolo: string) => {
+    setLoadingNavegacao(true)
     router.push(`/empenhos?protocolo=${protocolo}`)
   }
 
@@ -138,6 +146,12 @@ export default function HomePage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Controle de Despesas</h1>
+
+      {loadingNavegacao && (
+        <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+          <div className="text-xl font-bold animate-pulse">Carregando...</div>
+        </div>
+      )}
 
       <button
         onClick={() => setIsModalOpen(true)}

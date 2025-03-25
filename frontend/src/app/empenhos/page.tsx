@@ -9,7 +9,7 @@ import { setPagamentos } from '@/features/pagamento/pagamentoSlice'
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
 import trashIcon from '../../../public/icons/trash.png'
-import { getEmpenhos, getEmpenhosById, criarEmpenho, deletarEmpenho } from '@/api/empenhos'
+import { getEmpenhos, criarEmpenho, deletarEmpenho } from '@/api/empenhos'
 import { getPagamentosPorEmpenho } from '@/api/pagamentos'
 
 const formatCurrency = (value: number) =>
@@ -49,6 +49,7 @@ export default function EmpenhosPage() {
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [empenhoSelecionado, setEmpenhoSelecionado] = useState<string | null>(null)
   const [temPagamentos, setTemPagamentos] = useState(false)
+  const [loadingNavegacao, setLoadingNavegacao] = useState(false)
 
   const [formData, setFormData] = useState({
     valorEmpenho: 0,
@@ -153,10 +154,21 @@ export default function EmpenhosPage() {
     setEmpenhoSelecionado(null)
   }
 
+  const navegarPara = (url: string) => {
+    setLoadingNavegacao(true)
+    router.push(url)
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
+      {loadingNavegacao && (
+        <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+          <div className="text-xl font-bold animate-pulse">Carregando...</div>
+        </div>
+      )}
+
       <button
-        onClick={() => router.push('/')}
+        onClick={() => navegarPara('/')}
         className="text-blue-600 underline mb-4"
       >
         ← Voltar para Despesas
@@ -166,7 +178,7 @@ export default function EmpenhosPage() {
         Empenhos da Despesa{' '}
       </h1>
       <p className="text-blue-600 max-w-xs break-words pb-7 pt-0">
-          {protocolo}
+        {protocolo}
       </p>
 
       {despesa && (
@@ -204,7 +216,7 @@ export default function EmpenhosPage() {
               className="border p-3 rounded bg-white shadow-sm flex justify-between items-center"
             >
               <div
-                onClick={() => router.push(`/pagamentos?numeroEmpenho=${e.numeroEmpenho}`)}
+                onClick={() => navegarPara(`/pagamentos?numeroEmpenho=${e.numeroEmpenho}`)}
                 className="cursor-pointer flex-1"
                 title="Ver pagamentos"
               >

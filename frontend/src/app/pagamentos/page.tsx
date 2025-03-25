@@ -8,7 +8,7 @@ import { addPagamento, removePagamento } from '@/features/pagamento/pagamentoSli
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
 import trashIcon from '../../../public/icons/trash.png'
-import { getPagamentosPorEmpenho, getPagamentoById, criarPagamento, deletarPagamento } from '@/api/pagamentos'
+import { getPagamentosPorEmpenho, criarPagamento, deletarPagamento } from '@/api/pagamentos'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -34,6 +34,7 @@ export default function PagamentosPage() {
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [pagamentoSelecionado, setPagamentoSelecionado] = useState<string | null>(null)
   const [pagamentos, setPagamentos] = useState<any[]>([])
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchPagamentos = async () => {
@@ -116,15 +117,25 @@ export default function PagamentosPage() {
     setPagamentoSelecionado(null)
   }
 
+  const handleVoltar = () => {
+    setLoading(true)
+    router.back()
+  }
+
   return (
-    <div className="p-6 max-w-4xl mx-auto">
-      <button onClick={() => router.back()} className="text-blue-600 underline mb-4">
+    <div className="p-6 max-w-4xl mx-auto relative">
+      {loading && (
+        <div className="fixed inset-0 bg-white bg-opacity-75 flex items-center justify-center z-50">
+          <div className="text-xl font-bold animate-pulse">Carregando...</div>
+        </div>
+      )}
+
+      <button onClick={handleVoltar} className="text-blue-600 underline mb-4">
         ← Voltar
       </button>
 
-      <h1 className="text-2xl font-bold mb-2">
-        Pagamentos do Empenho <span className="text-blue-600">{numeroEmpenho}</span>
-      </h1>
+      <h1 className="text-2xl font-bold mb-2">Pagamentos do Empenho</h1>
+      <p className="text-blue-600 max-w-xs break-words pb-7 pt-0">{numeroEmpenho}</p>
 
       {empenho && (
         <div className="bg-gray-100 p-4 rounded mb-6">
@@ -134,10 +145,7 @@ export default function PagamentosPage() {
         </div>
       )}
 
-      <button
-        onClick={() => setIsModalOpen(true)}
-        className="bg-blue-600 text-white px-4 py-2 rounded mb-6"
-      >
+      <button onClick={() => setIsModalOpen(true)} className="bg-blue-600 text-white px-4 py-2 rounded mb-6">
         Novo Pagamento
       </button>
 
