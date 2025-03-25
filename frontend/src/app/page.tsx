@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/store'
-import { addDespesa, removeDespesa } from '@/features/despesa/despesaSlice'
+import { addDespesa, removeDespesa, setDespesas } from '@/features/despesa/despesaSlice'
 import Modal from '@/components/Modal'
 import trashIcon from '../../public/icons/trash.png'
+import { getDespesas, getDespesaById, criarDespesa, deletarDespesa } from '@/api/despesas'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -32,6 +33,18 @@ export default function HomePage() {
     dataVencimento: '',
   })
 
+  useEffect(() => {
+    async function fetchDespesas() {
+      try {
+        const data = await getDespesas()
+        dispatch(setDespesas(data))
+      } catch (error) {
+        console.error('Erro ao carregar despesas:', error)
+      }
+    }
+    fetchDespesas()
+  }, [dispatch])
+
   const preencherCamposIniciais = () => {
     const now = new Date()
     const competencia = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -55,7 +68,7 @@ export default function HomePage() {
     setFormData(prev => ({ ...prev, valorDespesa: parseFloat(centavos) }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.valorDespesa <= 0) {
       alert('O valor da despesa deve ser maior que zero.')
@@ -63,15 +76,22 @@ export default function HomePage() {
     }
 
     const valoresAuto = preencherCamposIniciais()
-    dispatch(addDespesa({
+    const payload = {
       ...formData,
       protocolo: valoresAuto.protocolo,
       competencia: valoresAuto.competencia,
       dataProtocolo: valoresAuto.dataProtocolo,
       status: 'Pendente',
-    }))
-    setIsModalOpen(false)
-    resetForm()
+    }
+
+    try {
+      await criarDespesa(payload)
+      dispatch(addDespesa(payload))
+      setIsModalOpen(false)
+      resetForm()
+    } catch (error) {
+      alert('Erro ao salvar a despesa.')
+    }
   }
 
   const resetForm = () => {
@@ -102,9 +122,14 @@ export default function HomePage() {
     setModalDeleteOpen(true)
   }
 
-  const excluirDespesa = () => {
+  const excluirDespesa = async () => {
     if (despesaSelecionada && !temEmpenhos) {
-      dispatch(removeDespesa(despesaSelecionada))
+      try {
+        await deletarDespesa(despesaSelecionada)
+        dispatch(removeDespesa(despesaSelecionada))
+      } catch (error) {
+        alert('Erro ao excluir a despesa.')
+      }
     }
     setModalDeleteOpen(false)
     setDespesaSelecionada(null)

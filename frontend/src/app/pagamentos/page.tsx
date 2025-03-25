@@ -1,13 +1,14 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/store'
 import { addPagamento, removePagamento } from '@/features/pagamento/pagamentoSlice'
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
 import trashIcon from '../../../public/icons/trash.png'
+import { getPagamentosPorEmpenho, getPagamentoById, criarPagamento, deletarPagamento } from '@/api/pagamentos'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -23,10 +24,6 @@ export default function PagamentosPage() {
   const numeroEmpenho = searchParams.get('numeroEmpenho') || ''
   const dispatch = useDispatch()
 
-  const pagamentos = useSelector((state: RootState) =>
-    state.pagamento.lista.filter((p) => p.numeroEmpenho === numeroEmpenho)
-  )
-
   const empenho = useSelector((state: RootState) =>
     state.empenho.lista.find((e) => e.numeroEmpenho === numeroEmpenho)
   )
@@ -36,6 +33,19 @@ export default function PagamentosPage() {
   const [valor, setValor] = useState('R$ 0,00')
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [pagamentoSelecionado, setPagamentoSelecionado] = useState<string | null>(null)
+  const [pagamentos, setPagamentos] = useState<any[]>([])
+
+  useEffect(() => {
+    const fetchPagamentos = async () => {
+      try {
+        const data = await getPagamentosPorEmpenho(numeroEmpenho)
+        setPagamentos(data)
+      } catch (error) {
+        alert('Erro ao carregar pagamentos.')
+      }
+    }
+    if (numeroEmpenho) fetchPagamentos()
+  }, [numeroEmpenho])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -50,7 +60,7 @@ export default function PagamentosPage() {
     setFormData((prev) => ({ ...prev, valorPagamento: parseFloat(centavos) }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (formData.valorPagamento <= 0) {
       alert('O valor do pagamento deve ser maior que zero.')
@@ -65,17 +75,21 @@ export default function PagamentosPage() {
       return
     }
 
-    dispatch(
-      addPagamento({
-        numeroPagamento: uuidv4(),
-        dataPagamento: new Date().toISOString(),
-        ...formData,
+    try {
+      const payload = {
         numeroEmpenho,
-      })
-    )
-
-    setIsModalOpen(false)
-    resetForm()
+        ...formData,
+        dataPagamento: new Date().toISOString(),
+        numeroPagamento: uuidv4(),
+      }
+      await criarPagamento(payload)
+      dispatch(addPagamento(payload))
+      setPagamentos((prev) => [...prev, payload])
+      setIsModalOpen(false)
+      resetForm()
+    } catch (error) {
+      alert('Erro ao salvar o pagamento.')
+    }
   }
 
   const resetForm = () => {
@@ -88,9 +102,15 @@ export default function PagamentosPage() {
     setModalDeleteOpen(true)
   }
 
-  const excluirPagamento = () => {
+  const excluirPagamento = async () => {
     if (pagamentoSelecionado) {
-      dispatch(removePagamento(pagamentoSelecionado))
+      try {
+        await deletarPagamento(pagamentoSelecionado)
+        dispatch(removePagamento(pagamentoSelecionado))
+        setPagamentos((prev) => prev.filter((p) => p.numeroPagamento !== pagamentoSelecionado))
+      } catch (error) {
+        alert('Erro ao excluir pagamento.')
+      }
     }
     setModalDeleteOpen(false)
     setPagamentoSelecionado(null)

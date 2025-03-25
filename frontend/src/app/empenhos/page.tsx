@@ -1,13 +1,16 @@
 'use client'
 
 import { useSearchParams, useRouter } from 'next/navigation'
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/store'
-import { addEmpenho, removeEmpenho } from '@/features/empenho/empenhoSlice'
+import { addEmpenho, removeEmpenho, setEmpenhos } from '@/features/empenho/empenhoSlice'
+import { setPagamentos } from '@/features/pagamento/pagamentoSlice'
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
 import trashIcon from '../../../public/icons/trash.png'
+import { getEmpenhos, getEmpenhosById, criarEmpenho, deletarEmpenho } from '@/api/empenhos'
+import { getPagamentosPorEmpenho } from '@/api/pagamentos'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -53,6 +56,35 @@ export default function EmpenhosPage() {
   })
   const [valor, setValor] = useState('R$ 0,00')
 
+  useEffect(() => {
+    async function fetchEmpenhos() {
+      try {
+        const data = await getEmpenhos()
+        dispatch(setEmpenhos(data))
+      } catch (error) {
+        console.error('Erro ao carregar empenhos:', error)
+      }
+    }
+    fetchEmpenhos()
+  }, [dispatch])
+
+  useEffect(() => {
+    async function fetchPagamentos() {
+      try {
+        if (empenhos.length > 0) {
+          const allPagamentos = await Promise.all(
+            empenhos.map((e) => getPagamentosPorEmpenho(e.numeroEmpenho))
+          )
+          const pagamentosFlatten = allPagamentos.flat()
+          dispatch(setPagamentos(pagamentosFlatten))
+        }
+      } catch (err) {
+        console.error('Erro ao carregar pagamentos:', err)
+      }
+    }
+    fetchPagamentos()
+  }, [empenhos, dispatch])
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
     setFormData((prev) => ({ ...prev, [name]: value }))
@@ -66,7 +98,7 @@ export default function EmpenhosPage() {
     setFormData((prev) => ({ ...prev, valorEmpenho: parseFloat(centavos) }))
   }
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
     if (formData.valorEmpenho <= 0) {
@@ -79,24 +111,25 @@ export default function EmpenhosPage() {
       return
     }
 
-    dispatch(
-      addEmpenho({
-        numeroEmpenho: uuidv4(),
-        dataEmpenho: new Date().toISOString(),
-        ...formData,
-        protocoloDespesa: protocolo,
-      })
-    )
+    const payload = {
+      numeroEmpenho: uuidv4(),
+      dataEmpenho: new Date().toISOString(),
+      ...formData,
+      protocoloDespesa: protocolo,
+    }
 
-    setIsModalOpen(false)
-    resetForm()
+    try {
+      await criarEmpenho(payload)
+      dispatch(addEmpenho(payload))
+      setIsModalOpen(false)
+      resetForm()
+    } catch (error) {
+      alert('Erro ao salvar o empenho.')
+    }
   }
 
   const resetForm = () => {
-    setFormData({
-      valorEmpenho: 0,
-      observacao: '',
-    })
+    setFormData({ valorEmpenho: 0, observacao: '' })
     setValor('R$ 0,00')
   }
 
@@ -107,9 +140,14 @@ export default function EmpenhosPage() {
     setModalDeleteOpen(true)
   }
 
-  const excluirEmpenho = () => {
+  const excluirEmpenho = async () => {
     if (empenhoSelecionado && !temPagamentos) {
-      dispatch(removeEmpenho(empenhoSelecionado))
+      try {
+        await deletarEmpenho(empenhoSelecionado)
+        dispatch(removeEmpenho(empenhoSelecionado))
+      } catch (error) {
+        alert('Erro ao excluir o empenho.')
+      }
     }
     setModalDeleteOpen(false)
     setEmpenhoSelecionado(null)
@@ -125,8 +163,11 @@ export default function EmpenhosPage() {
       </button>
 
       <h1 className="text-2xl font-bold mb-2">
-        Empenhos da Despesa <span className="text-blue-600">{protocolo}</span>
+        Empenhos da Despesa{' '}
       </h1>
+      <p className="text-blue-600 max-w-xs break-words pb-7 pt-0">
+          {protocolo}
+      </p>
 
       {despesa && (
         <div className="bg-gray-100 p-4 rounded mb-6">
@@ -213,7 +254,7 @@ export default function EmpenhosPage() {
       </Modal>
 
       <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
-        {temPagamentos ? (
+        {empenhoSelecionado && pagamentos.some((p) => p.numeroEmpenho === empenhoSelecionado) ? (
           <div className="text-center">
             <p className="mb-4">Não é possível excluir um empenho com um pagamento registrado.</p>
             <button
