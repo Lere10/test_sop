@@ -4,11 +4,11 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/store'
-import { addEmpenho } from '@/features/empenho/empenhoSlice'
+import { addEmpenho, removeEmpenho } from '@/features/empenho/empenhoSlice'
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
+import trashIcon from '../../../public/icons/trash.png'
 
-// Função para formatar valores
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -33,6 +33,8 @@ export default function EmpenhosPage() {
     state.empenho.lista.filter((e) => e.protocoloDespesa === protocolo)
   )
 
+  const pagamentos = useSelector((state: RootState) => state.pagamento.lista)
+
   const despesa = useSelector((state: RootState) =>
     state.despesa.despesas.find((d) => d.protocolo === protocolo)
   )
@@ -41,6 +43,10 @@ export default function EmpenhosPage() {
   const valorRestante = (despesa?.valorDespesa || 0) - valorTotalEmpenhado
 
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
+  const [empenhoSelecionado, setEmpenhoSelecionado] = useState<string | null>(null)
+  const [temPagamentos, setTemPagamentos] = useState(false)
+
   const [formData, setFormData] = useState({
     valorEmpenho: 0,
     observacao: '',
@@ -94,6 +100,21 @@ export default function EmpenhosPage() {
     setValor('R$ 0,00')
   }
 
+  const confirmarExclusao = (numeroEmpenho: string) => {
+    const possuiPagamentos = pagamentos.some((p) => p.numeroEmpenho === numeroEmpenho)
+    setTemPagamentos(possuiPagamentos)
+    setEmpenhoSelecionado(numeroEmpenho)
+    setModalDeleteOpen(true)
+  }
+
+  const excluirEmpenho = () => {
+    if (empenhoSelecionado && !temPagamentos) {
+      dispatch(removeEmpenho(empenhoSelecionado))
+    }
+    setModalDeleteOpen(false)
+    setEmpenhoSelecionado(null)
+  }
+
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <button
@@ -137,8 +158,27 @@ export default function EmpenhosPage() {
           <li className="text-gray-500 italic">Nenhum empenho cadastrado ainda.</li>
         ) : (
           empenhos.map((e, i) => (
-            <li key={i} className="border p-3 rounded bg-white shadow-sm">
-              <strong>Protocolo de empenho: {e.numeroEmpenho}</strong> - {formatCurrency(e.valorEmpenho)} - {e.observacao} - Empenhado em {formatDate(e.dataEmpenho)}
+            <li
+              key={i}
+              className="border p-3 rounded bg-white shadow-sm flex justify-between items-center"
+            >
+              <div
+                onClick={() => router.push(`/pagamentos?numeroEmpenho=${e.numeroEmpenho}`)}
+                className="cursor-pointer flex-1"
+                title="Ver pagamentos"
+              >
+                <strong>Protocolo de empenho: {e.numeroEmpenho}</strong> - {formatCurrency(e.valorEmpenho)} - {e.observacao} - Empenhado em {formatDate(e.dataEmpenho)}
+              </div>
+              <button
+                onClick={(event) => {
+                  event.stopPropagation()
+                  confirmarExclusao(e.numeroEmpenho)
+                }}
+                className="ml-4"
+                title="Excluir"
+              >
+                <img src={trashIcon.src} alt="Excluir" className="w-5 h-5" />
+              </button>
             </li>
           ))
         )}
@@ -170,6 +210,32 @@ export default function EmpenhosPage() {
             Salvar Empenho
           </button>
         </form>
+      </Modal>
+
+      <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
+        {temPagamentos ? (
+          <div className="text-center">
+            <p className="mb-4">Não é possível excluir um empenho com um pagamento registrado.</p>
+            <button
+              onClick={() => setModalDeleteOpen(false)}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Entendi
+            </button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="mb-4">Tem certeza que deseja excluir esse empenho?</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={excluirEmpenho} className="bg-red-600 text-white px-4 py-2 rounded">
+                Sim
+              </button>
+              <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-300 px-4 py-2 rounded">
+                Não
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )
