@@ -4,10 +4,10 @@ import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { useRouter } from 'next/navigation'
 import { RootState } from '@/store'
-import { addDespesa } from '@/features/despesa/despesaSlice'
+import { addDespesa, removeDespesa } from '@/features/despesa/despesaSlice'
 import Modal from '@/components/Modal'
+import trashIcon from '../../public/icons/trash.png'
 
-// Função para formatar moeda
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -15,7 +15,12 @@ export default function HomePage() {
   const dispatch = useDispatch()
   const router = useRouter()
   const despesas = useSelector((state: RootState) => state.despesa.despesas)
+  const empenhos = useSelector((state: RootState) => state.empenho.lista)
+
   const [isModalOpen, setIsModalOpen] = useState(false)
+  const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
+  const [despesaSelecionada, setDespesaSelecionada] = useState<string | null>(null)
+  const [temEmpenhos, setTemEmpenhos] = useState(false)
 
   const [valor, setValor] = useState('R$ 0,00')
   const [formData, setFormData] = useState({
@@ -80,14 +85,29 @@ export default function HomePage() {
     })
     setValor('R$ 0,00')
   }
+
   const formatarData = (isoDate: string) => {
     const [ano, mes, dia] = isoDate.split('-')
     return `${dia}/${mes}/${ano}`
   }
-  
 
   const handleAbrirEmpenhos = (protocolo: string) => {
     router.push(`/empenhos?protocolo=${protocolo}`)
+  }
+
+  const confirmarExclusao = (protocolo: string) => {
+    const possuiEmpenhos = empenhos.some((e) => e.protocoloDespesa === protocolo)
+    setTemEmpenhos(possuiEmpenhos)
+    setDespesaSelecionada(protocolo)
+    setModalDeleteOpen(true)
+  }
+
+  const excluirDespesa = () => {
+    if (despesaSelecionada && !temEmpenhos) {
+      dispatch(removeDespesa(despesaSelecionada))
+    }
+    setModalDeleteOpen(false)
+    setDespesaSelecionada(null)
   }
 
   return (
@@ -103,13 +123,22 @@ export default function HomePage() {
 
       <ul className="space-y-2">
         {despesas.map((d, i) => (
-            <li
+          <li
             key={i}
-            className="border p-3 rounded bg-white shadow-sm hover:bg-gray-100 cursor-pointer"
-            onClick={() => handleAbrirEmpenhos(d.protocolo)}
+            className="border p-3 rounded bg-white shadow-sm hover:bg-gray-100 cursor-pointer flex justify-between items-center"
+          >
+            <div onClick={() => handleAbrirEmpenhos(d.protocolo)} className="flex-1">
+              <strong>{d.descricao}</strong><br />
+              <strong>Credor:</strong> {d.credor} - <strong>{d.tipoDespesa}</strong> - <strong>Valor:</strong> {formatCurrency(d.valorDespesa)} / <strong>Vencimento:</strong> {formatarData(d.dataVencimento)} / <strong>Protocolo:</strong> {d.protocolo}
+            </div>
+            <button
+              onClick={() => confirmarExclusao(d.protocolo)}
+              className="ml-4"
+              title="Excluir"
             >
-            <strong>{d.descricao}</strong><br/><strong>Credor:</strong> {d.credor} - <strong>{d.tipoDespesa}</strong> - <strong>Valor:</strong> {formatCurrency(d.valorDespesa)} / <strong>Vencimento em:</strong> {formatarData(d.dataVencimento)} / <strong>Protocolo:</strong> {d.protocolo} 
-            </li>
+              <img src={trashIcon.src} alt="Excluir" className="w-5 h-5" />
+            </button>
+          </li>
         ))}
       </ul>
 
@@ -125,12 +154,36 @@ export default function HomePage() {
             <option value="Obra de Rodovias">Obra de Rodovias</option>
             <option value="Outros">Outros</option>
           </select>
-            <label className="block font-bold">
-            Data de vencimento
-            </label>
+          <label className="block font-bold">Data de vencimento</label>
           <input name="dataVencimento" type="date" value={formData.dataVencimento} onChange={handleChange} className="border p-2" required />
           <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">Salvar</button>
         </form>
+      </Modal>
+
+      <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
+        {temEmpenhos ? (
+          <div className="text-center">
+            <p className="mb-4">Não é possível excluir uma despesa que possua empenhos.</p>
+            <button
+              onClick={() => setModalDeleteOpen(false)}
+              className="bg-blue-600 text-white px-4 py-2 rounded"
+            >
+              Entendi
+            </button>
+          </div>
+        ) : (
+          <div className="text-center">
+            <p className="mb-4">Tem certeza que deseja excluir essa despesa?</p>
+            <div className="flex justify-center gap-4">
+              <button onClick={excluirDespesa} className="bg-red-600 text-white px-4 py-2 rounded">
+                Sim
+              </button>
+              <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-300 px-4 py-2 rounded">
+                Não
+              </button>
+            </div>
+          </div>
+        )}
       </Modal>
     </div>
   )

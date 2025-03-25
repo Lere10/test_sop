@@ -137,10 +137,16 @@ export default function EmpenhosPage() {
           <li className="text-gray-500 italic">Nenhum empenho cadastrado ainda.</li>
         ) : (
           empenhos.map((e, i) => (
-            <li key={i} className="border p-3 rounded bg-white shadow-sm">
-              <strong>Protocolo de empenho: {e.numeroEmpenho}</strong> - {formatCurrency(e.valorEmpenho)} - {e.observacao} - Empenhado em {formatDate(e.dataEmpenho)}
-            </li>
-          ))
+  <li
+    key={i}
+    onClick={() => router.push(`/pagamentos?empenho=${e.numeroEmpenho}`)}
+    className="border p-3 rounded bg-white shadow-sm hover:bg-gray-100 cursor-pointer"
+    title="Ver pagamentos deste empenho"
+  >
+    <strong>Protocolo de empenho: {e.numeroEmpenho}</strong> — {formatCurrency(e.valorEmpenho)} — {e.observacao} — Empenhado em {formatDate(e.dataEmpenho)}
+  </li>
+))
+
         )}
       </ul>
 
