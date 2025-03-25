@@ -68,7 +68,7 @@ Acesse no navegador: [http://localhost:3000](http://localhost:3000)
 ## 🔗 Integração com o Backend
 
 A aplicação se comunica com uma API Java (Spring Boot) que deve estar rodando em `http://localhost:8080`.
-Pare executar, abra outra aba em seu terminal, vá até a pasta do backend e rode `./mvnw spring-boot:run`
+Para executar, abra outra aba em seu terminal, vá até a pasta do backend e rode `./mvnw spring-boot:run`
 
 ### Endpoints utilizados:
 
