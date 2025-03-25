@@ -4,11 +4,11 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/store'
-import { addPagamento } from '@/features/pagamento/pagamentoSlice'
+import { addPagamento, removePagamento } from '@/features/pagamento/pagamentoSlice'
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
+import trashIcon from '../../../public/icons/trash.png'
 
-// Utilitários de formatação
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
 
@@ -21,25 +21,21 @@ export default function PagamentosPage() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const numeroEmpenho = searchParams.get('numeroEmpenho') || ''
-
   const dispatch = useDispatch()
 
-  // Busca os pagamentos vinculados a esse empenho
   const pagamentos = useSelector((state: RootState) =>
     state.pagamento.lista.filter((p) => p.numeroEmpenho === numeroEmpenho)
   )
 
-  // Busca o empenho original para mostrar os dados e validar limite de valor
   const empenho = useSelector((state: RootState) =>
     state.empenho.lista.find((e) => e.numeroEmpenho === numeroEmpenho)
   )
 
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const [formData, setFormData] = useState({
-    valorPagamento: 0,
-    observacao: '',
-  })
+  const [formData, setFormData] = useState({ valorPagamento: 0, observacao: '' })
   const [valor, setValor] = useState('R$ 0,00')
+  const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
+  const [pagamentoSelecionado, setPagamentoSelecionado] = useState<string | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -56,7 +52,6 @@ export default function PagamentosPage() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
-
     if (formData.valorPagamento <= 0) {
       alert('O valor do pagamento deve ser maior que zero.')
       return
@@ -84,11 +79,21 @@ export default function PagamentosPage() {
   }
 
   const resetForm = () => {
-    setFormData({
-      valorPagamento: 0,
-      observacao: '',
-    })
+    setFormData({ valorPagamento: 0, observacao: '' })
     setValor('R$ 0,00')
+  }
+
+  const confirmarExclusao = (numeroPagamento: string) => {
+    setPagamentoSelecionado(numeroPagamento)
+    setModalDeleteOpen(true)
+  }
+
+  const excluirPagamento = () => {
+    if (pagamentoSelecionado) {
+      dispatch(removePagamento(pagamentoSelecionado))
+    }
+    setModalDeleteOpen(false)
+    setPagamentoSelecionado(null)
   }
 
   return (
@@ -121,8 +126,17 @@ export default function PagamentosPage() {
           <li className="text-gray-500 italic">Nenhum pagamento cadastrado ainda.</li>
         ) : (
           pagamentos.map((p, i) => (
-            <li key={i} className="border p-3 rounded bg-white shadow-sm">
-              <strong>{p.numeroPagamento}</strong> - {formatCurrency(p.valorPagamento)} - {p.observacao} em {formatDateTime(p.dataPagamento)}
+            <li key={i} className="border p-3 rounded bg-white shadow-sm flex justify-between items-center">
+              <div>
+                <strong>{p.numeroPagamento}</strong> - {formatCurrency(p.valorPagamento)} - {p.observacao} em {formatDateTime(p.dataPagamento)}
+              </div>
+              <button
+                onClick={() => confirmarExclusao(p.numeroPagamento)}
+                className="ml-4"
+                title="Excluir"
+              >
+                <img src={trashIcon.src} alt="Excluir" className="w-5 h-5" />
+              </button>
             </li>
           ))
         )}
@@ -154,6 +168,20 @@ export default function PagamentosPage() {
             Salvar Pagamento
           </button>
         </form>
+      </Modal>
+
+      <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
+        <div className="text-center">
+          <p className="mb-4">Tem certeza que deseja excluir o pagamento?</p>
+          <div className="flex justify-center gap-4">
+            <button onClick={excluirPagamento} className="bg-red-600 text-white px-4 py-2 rounded">
+              Sim
+            </button>
+            <button onClick={() => setModalDeleteOpen(false)} className="bg-gray-300 px-4 py-2 rounded">
+              Não
+            </button>
+          </div>
+        </div>
       </Modal>
     </div>
   )
