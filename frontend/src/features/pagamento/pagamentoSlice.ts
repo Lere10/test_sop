@@ -1,6 +1,5 @@
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-// Tipo da entidade Pagamento
 export interface Pagamento {
   numeroPagamento: string
   dataPagamento: string
@@ -9,7 +8,6 @@ export interface Pagamento {
   numeroEmpenho: string
 }
 
-// Estado inicial da store de pagamentos
 interface PagamentoState {
   lista: Pagamento[]
 }
@@ -18,7 +16,6 @@ const initialState: PagamentoState = {
   lista: [],
 }
 
-// Slice do Redux para pagamentos
 const pagamentoSlice = createSlice({
   name: 'pagamento',
   initialState,

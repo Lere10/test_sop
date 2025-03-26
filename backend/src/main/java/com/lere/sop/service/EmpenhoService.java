@@ -31,7 +31,7 @@ if (dto.getValorEmpenho() == null || dto.getValorEmpenho().compareTo(BigDecimal.
         Despesa despesa = despesaRepository.findById(dto.getProtocoloDespesa())
                 .orElseThrow(() -> new RuntimeException("Despesa não encontrada para o protocolo informado."));
 
-// Regra que valida se a soma dos empenhos não ultrapassa o valor total da despesa
+
 
         BigDecimal somaEmpenhosExistentes = despesa.getEmpenhos().stream()
                 .map(Empenho::getValorEmpenho)
@@ -44,7 +44,6 @@ if (dto.getValorEmpenho() == null || dto.getValorEmpenho().compareTo(BigDecimal.
                     "A soma dos valores dos empenhos ultrapassa o valor total da despesa.");
         }
 
-// fim da regra de negócio
 
         Empenho empenho = new Empenho();
         empenho.setDataEmpenho(dto.getDataEmpenho());
@@ -73,7 +72,6 @@ if (dto.getValorEmpenho() == null || dto.getValorEmpenho().compareTo(BigDecimal.
         return toDTO(empenho);
     }
 
-    // Método auxiliar para converter de entidade para DTO
     private EmpenhoDTO toDTO(Empenho empenho) {
         EmpenhoDTO dto = new EmpenhoDTO();
         dto.setNumeroEmpenho(empenho.getNumeroEmpenho().toString());

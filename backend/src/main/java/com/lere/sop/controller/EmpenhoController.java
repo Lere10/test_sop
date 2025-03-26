@@ -22,12 +22,6 @@ public ResponseEntity<EmpenhoDTO> criar(@RequestBody EmpenhoDTO dto) {
     EmpenhoDTO empenhoSalvo = empenhoService.salvar(dto);
     return ResponseEntity.ok(empenhoSalvo);
 }
-
-
-    // @GetMapping
-    // public ResponseEntity<List<Empenho>> listarTodos() {
-    //     return ResponseEntity.ok(empenhoService.listarTodos());
-    // }
     @GetMapping
         public ResponseEntity<List<EmpenhoDTO>> listarTodos() {
             return ResponseEntity.ok(empenhoService.listarTodos());

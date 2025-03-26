@@ -73,7 +73,6 @@ Empenho empenho = empenhoRepository.findById(numeroEmpenhoUUID)
         pagamentoRepository.deleteById(numeroPagamento);
     }
 
-    // Conversor de entidade para DTO
     private PagamentoDTO toDTO(Pagamento pagamento) {
         PagamentoDTO dto = new PagamentoDTO();
         dto.setNumeroPagamento(pagamento.getNumeroPagamento().toString());

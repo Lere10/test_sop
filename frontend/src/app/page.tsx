@@ -101,7 +101,7 @@ export default function HomePage() {
   
     try {
       const novaDespesa = await criarDespesa(payload)
-      dispatch(addDespesa(novaDespesa)) // agora vem do backend, já com protocolo
+      dispatch(addDespesa(novaDespesa)) 
       setIsModalOpen(false)
       resetForm()
     } catch (error) {

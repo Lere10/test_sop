@@ -51,7 +51,6 @@ public class DespesaService {
         Despesa despesa = despesaRepository.findById(protocolo)
                 .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Despesa não encontrada"));
 
-        // Verifica se há empenhos relacionados a essa despesa
         boolean existeEmpenhos = empenhoRepository.existsByDespesa(despesa);
 
         if (existeEmpenhos) {

@@ -9,9 +9,8 @@ import java.util.UUID;
 
 public interface PagamentoRepository extends JpaRepository<Pagamento, UUID> {
 
-    // Verifica se há pagamentos para um determinado empenho
+ 
     boolean existsByEmpenho(Empenho empenho);
 
-    // Opcional: listar todos os pagamentos de um empenho específico
     List<Pagamento> findByEmpenho(Empenho empenho);
 }

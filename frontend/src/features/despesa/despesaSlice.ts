@@ -1,7 +1,6 @@
 
 import { createSlice, PayloadAction } from '@reduxjs/toolkit'
 
-// Tipo para a Despesa
 export interface Despesa {
   protocolo: string
   competencia: string
@@ -14,7 +13,6 @@ export interface Despesa {
   dataVencimento: string
 }
 
-// Estado inicial do slice
 interface DespesaState {
   despesas: Despesa[]
 }
@@ -23,7 +21,6 @@ const initialState: DespesaState = {
   despesas: [],
 }
 
-// Criando o slice
 const despesaSlice = createSlice({
   name: 'despesa',
   initialState,
