@@ -114,8 +114,8 @@ export default function EmpenhosPage() {
     }
 
     try {
-      await criarEmpenho(payload)
-      dispatch(addEmpenho(payload))
+      const novoEmpenho = await criarEmpenho(payload)
+      dispatch(addEmpenho(novoEmpenho))
       setIsModalOpen(false)
       resetForm()
     } catch (error) {
