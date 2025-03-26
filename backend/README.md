@@ -49,11 +49,15 @@ spring.jpa.hibernate.ddl-auto=update
 
 ### 3. Execute a aplicação
 
+````
+Primeiro, crie um banco de dados via Postgres e rode o arquivo `schema.sql` que se encontra na raíz do diretório `backend`
+
+Depois, rode:
 ```bash
 ./mvnw spring-boot:run
-```
+````
 
-API disponível em:  
+API deve ficar disponível em:  
 📍 `http://localhost:8080/api`
 
 ---

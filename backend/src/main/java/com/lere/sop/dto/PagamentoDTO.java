@@ -13,5 +13,5 @@ public class PagamentoDTO {
     private LocalDateTime dataPagamento;
     private BigDecimal valorPagamento;
     private String observacao;
-    private String numeroEmpenho; // UUID do empenho ao qual o pagamento está atrelado
+    private String numeroEmpenho; 
 }

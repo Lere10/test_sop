@@ -77,29 +77,40 @@ export default function HomePage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+  
     if (formData.valorDespesa <= 0) {
       alert('O valor da despesa deve ser maior que zero.')
       return
     }
-
-    const valoresAuto = preencherCamposIniciais()
+  
+    if (!formData.dataVencimento) {
+      alert('A data de vencimento deve ser preenchida.')
+      return
+    }
+  
+    const now = new Date()
+    const competencia = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    const dataProtocolo = now.toISOString()
+  
     const payload = {
       ...formData,
-      protocolo: valoresAuto.protocolo,
-      competencia: valoresAuto.competencia,
-      dataProtocolo: valoresAuto.dataProtocolo,
+      competencia,
+      dataProtocolo,
       status: 'Pendente',
     }
-
+  
     try {
-      await criarDespesa(payload)
-      dispatch(addDespesa(payload))
+      const novaDespesa = await criarDespesa(payload)
+      dispatch(addDespesa(novaDespesa)) // agora vem do backend, já com protocolo
       setIsModalOpen(false)
       resetForm()
     } catch (error) {
+      console.log("Erro ao salvar despesa:", error)
       alert('Erro ao salvar a despesa.')
     }
   }
+  
+  
 
   const resetForm = () => {
     setFormData({
@@ -182,19 +193,19 @@ export default function HomePage() {
       </ul>
 
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm() }}>
-        <h2 className="text-lg font-semibold mb-4">Cadastrar Nova Despesa</h2>
+        <h2 className="text-lg font-semibold mb-4 text-black">Cadastrar Nova Despesa</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          <input name="credor" placeholder="Credor" value={formData.credor} onChange={handleChange} className="border p-2" required />
-          <input name="valorDespesa" placeholder="Valor da Despesa" value={valor} onChange={handleValorChange} className="border p-2" required />
-          <textarea name="descricao" placeholder="Descrição" value={formData.descricao} onChange={handleChange} className="border p-2" required />
-          <select name="tipoDespesa" value={formData.tipoDespesa} onChange={handleChange} className="border p-2" required>
+          <input name="credor" placeholder="Credor" value={formData.credor} onChange={handleChange} className="border p-2 text-black" required />
+          <input name="valorDespesa" placeholder="Valor da Despesa" value={valor} onChange={handleValorChange} className="border p-2 text-black" required />
+          <textarea name="descricao" placeholder="Descrição" value={formData.descricao} onChange={handleChange} className="border p-2 text-black" required />
+          <select name="tipoDespesa" value={formData.tipoDespesa} onChange={handleChange} className="border p-2 text-black" required>
             <option value="">Selecione o Tipo de Despesa</option>
             <option value="Obra de Edificação">Obra de Edificação</option>
             <option value="Obra de Rodovias">Obra de Rodovias</option>
             <option value="Outros">Outros</option>
           </select>
-          <label className="block font-bold">Data de vencimento</label>
-          <input name="dataVencimento" type="date" value={formData.dataVencimento} onChange={handleChange} className="border p-2" required />
+          <label className="block font-bold text-black">Data de vencimento</label>
+          <input name="dataVencimento" type="date" value={formData.dataVencimento} onChange={handleChange} className="border p-2 text-black" required />
           <button type="submit" className="bg-green-600 text-white px-4 py-2 rounded">Salvar</button>
         </form>
       </Modal>
@@ -202,7 +213,7 @@ export default function HomePage() {
       <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
         {temEmpenhos ? (
           <div className="text-center">
-            <p className="mb-4">Não é possível excluir uma despesa que possua empenhos.</p>
+            <p className="mb-4 text-black">Não é possível excluir uma despesa que possua empenhos.</p>
             <button
               onClick={() => setModalDeleteOpen(false)}
               className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -212,7 +223,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="text-center">
-            <p className="mb-4">Tem certeza que deseja excluir essa despesa?</p>
+            <p className="mb-4 text-black">Tem certeza que deseja excluir essa despesa?</p>
             <div className="flex justify-center gap-4">
               <button onClick={excluirDespesa} className="bg-red-600 text-white px-4 py-2 rounded">
                 Sim

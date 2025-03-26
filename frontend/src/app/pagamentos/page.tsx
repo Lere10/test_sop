@@ -4,11 +4,14 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/store'
-import { addPagamento, removePagamento } from '@/features/pagamento/pagamentoSlice'
+import { addEmpenho } from '@/features/empenho/empenhoSlice'
+import { addDespesa } from '@/features/despesa/despesaSlice'
 import Modal from '@/components/Modal'
-import { v4 as uuidv4 } from 'uuid'
 import trashIcon from '../../../public/icons/trash.png'
 import { getPagamentosPorEmpenho, criarPagamento, deletarPagamento } from '@/api/pagamentos'
+import { getEmpenhosById } from '@/api/empenhos'
+import { getDespesaById } from '@/api/despesas'
+import { setPagamentos, addPagamento, removePagamento } from '@/features/pagamento/pagamentoSlice'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -28,25 +31,59 @@ export default function PagamentosPage() {
     state.empenho.lista.find((e) => e.numeroEmpenho === numeroEmpenho)
   )
 
+  const despesa = useSelector((state: RootState) =>
+    state.despesa.despesas.find((d) => d.protocolo === empenho?.protocoloDespesa)
+  )
+
+  const pagamentosGlobais = useSelector((state: RootState) => state.pagamento.lista)
+  const pagamentos = pagamentosGlobais.filter(p => p.numeroEmpenho === numeroEmpenho)
+
   const [isModalOpen, setIsModalOpen] = useState(false)
   const [formData, setFormData] = useState({ valorPagamento: 0, observacao: '' })
   const [valor, setValor] = useState('R$ 0,00')
   const [modalDeleteOpen, setModalDeleteOpen] = useState(false)
   const [pagamentoSelecionado, setPagamentoSelecionado] = useState<string | null>(null)
-  const [pagamentos, setPagamentos] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     const fetchPagamentos = async () => {
       try {
         const data = await getPagamentosPorEmpenho(numeroEmpenho)
-        setPagamentos(data)
+        dispatch(setPagamentos(data))
       } catch (error) {
         alert('Erro ao carregar pagamentos.')
       }
     }
     if (numeroEmpenho) fetchPagamentos()
-  }, [numeroEmpenho])
+  }, [numeroEmpenho, dispatch])
+
+  useEffect(() => {
+    const fetchEmpenhoIfMissing = async () => {
+      if (!empenho && numeroEmpenho) {
+        try {
+          const data = await getEmpenhosById(numeroEmpenho)
+          dispatch(addEmpenho(data))
+        } catch (error) {
+          console.error('Erro ao buscar empenho:', error)
+        }
+      }
+    }
+    fetchEmpenhoIfMissing()
+  }, [empenho, numeroEmpenho, dispatch])
+
+  useEffect(() => {
+    const fetchDespesaIfMissing = async () => {
+      if (!despesa && empenho?.protocoloDespesa) {
+        try {
+          const data = await getDespesaById(empenho.protocoloDespesa)
+          dispatch(addDespesa(data))
+        } catch (error) {
+          console.error('Erro ao buscar despesa:', error)
+        }
+      }
+    }
+    fetchDespesaIfMissing()
+  }, [despesa, empenho, dispatch])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -76,19 +113,24 @@ export default function PagamentosPage() {
       return
     }
 
+    if (!empenho?.numeroEmpenho) {
+      alert('Número do empenho não encontrado.')
+      return
+    }
+
+    const payload = {
+      ...formData,
+      dataPagamento: new Date().toISOString(),
+      numeroEmpenho: empenho.numeroEmpenho,
+    }
+
     try {
-      const payload = {
-        numeroEmpenho,
-        ...formData,
-        dataPagamento: new Date().toISOString(),
-        numeroPagamento: uuidv4(),
-      }
-      await criarPagamento(payload)
-      dispatch(addPagamento(payload))
-      setPagamentos((prev) => [...prev, payload])
+      const novoPagamento = await criarPagamento(payload)
+      dispatch(addPagamento(novoPagamento))
       setIsModalOpen(false)
       resetForm()
     } catch (error) {
+      console.log('Erro ao salvar pagamento:', error)
       alert('Erro ao salvar o pagamento.')
     }
   }
@@ -108,7 +150,6 @@ export default function PagamentosPage() {
       try {
         await deletarPagamento(pagamentoSelecionado)
         dispatch(removePagamento(pagamentoSelecionado))
-        setPagamentos((prev) => prev.filter((p) => p.numeroPagamento !== pagamentoSelecionado))
       } catch (error) {
         alert('Erro ao excluir pagamento.')
       }
@@ -171,24 +212,24 @@ export default function PagamentosPage() {
       </ul>
 
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm() }}>
-        <h2 className="text-lg font-semibold mb-4">Cadastrar Novo Pagamento</h2>
-        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          <label className="font-bold">Valor do Pagamento</label>
+        <h2 className="text-lg font-semibold mb-4 text-black">Cadastrar Novo Pagamento</h2>
+        <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4 ">
+          <label className="font-bold text-black">Valor do Pagamento</label>
           <input
             type="text"
             name="valorPagamento"
             value={valor}
             onChange={handleValorChange}
-            className="border p-2"
+            className="border p-2 text-black"
             required
           />
 
-          <label className="font-bold">Observação</label>
+          <label className="font-bold text-black">Observação</label>
           <textarea
             name="observacao"
             value={formData.observacao}
             onChange={handleChange}
-            className="border p-2"
+            className="border p-2 text-black"
             required
           />
 
@@ -200,7 +241,7 @@ export default function PagamentosPage() {
 
       <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
         <div className="text-center">
-          <p className="mb-4">Tem certeza que deseja excluir o pagamento?</p>
+          <p className="mb-4 text-black">Tem certeza que deseja excluir o pagamento?</p>
           <div className="flex justify-center gap-4">
             <button onClick={excluirPagamento} className="bg-red-600 text-white px-4 py-2 rounded">
               Sim

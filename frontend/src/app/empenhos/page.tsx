@@ -5,12 +5,12 @@ import { useEffect, useState } from 'react'
 import { useDispatch, useSelector } from 'react-redux'
 import { RootState } from '@/store'
 import { addEmpenho, removeEmpenho, setEmpenhos } from '@/features/empenho/empenhoSlice'
-import { setPagamentos } from '@/features/pagamento/pagamentoSlice'
+import { addDespesa } from '@/features/despesa/despesaSlice'
 import Modal from '@/components/Modal'
 import { v4 as uuidv4 } from 'uuid'
 import trashIcon from '../../../public/icons/trash.png'
 import { getEmpenhos, criarEmpenho, deletarEmpenho } from '@/api/empenhos'
-import { getPagamentosPorEmpenho } from '@/api/pagamentos'
+import { getDespesaById } from '@/api/despesas'
 
 const formatCurrency = (value: number) =>
   value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' })
@@ -36,11 +36,11 @@ export default function EmpenhosPage() {
     state.empenho.lista.filter((e) => e.protocoloDespesa === protocolo)
   )
 
-  const pagamentos = useSelector((state: RootState) => state.pagamento.lista)
-
   const despesa = useSelector((state: RootState) =>
     state.despesa.despesas.find((d) => d.protocolo === protocolo)
   )
+
+  const pagamentosGlobais = useSelector((state: RootState) => state.pagamento.lista)
 
   const valorTotalEmpenhado = empenhos.reduce((soma, e) => soma + e.valorEmpenho, 0)
   const valorRestante = (despesa?.valorDespesa || 0) - valorTotalEmpenhado
@@ -51,10 +51,7 @@ export default function EmpenhosPage() {
   const [temPagamentos, setTemPagamentos] = useState(false)
   const [loadingNavegacao, setLoadingNavegacao] = useState(false)
 
-  const [formData, setFormData] = useState({
-    valorEmpenho: 0,
-    observacao: '',
-  })
+  const [formData, setFormData] = useState({ valorEmpenho: 0, observacao: '' })
   const [valor, setValor] = useState('R$ 0,00')
 
   useEffect(() => {
@@ -70,21 +67,18 @@ export default function EmpenhosPage() {
   }, [dispatch])
 
   useEffect(() => {
-    async function fetchPagamentos() {
-      try {
-        if (empenhos.length > 0) {
-          const allPagamentos = await Promise.all(
-            empenhos.map((e) => getPagamentosPorEmpenho(e.numeroEmpenho))
-          )
-          const pagamentosFlatten = allPagamentos.flat()
-          dispatch(setPagamentos(pagamentosFlatten))
+    async function fetchDespesaIfMissing() {
+      if (!despesa && protocolo) {
+        try {
+          const data = await getDespesaById(protocolo)
+          dispatch(addDespesa(data))
+        } catch (error) {
+          console.error('Erro ao buscar despesa:', error)
         }
-      } catch (err) {
-        console.error('Erro ao carregar pagamentos:', err)
       }
     }
-    fetchPagamentos()
-  }, [empenhos, dispatch])
+    fetchDespesaIfMissing()
+  }, [despesa, protocolo, dispatch])
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target
@@ -135,8 +129,11 @@ export default function EmpenhosPage() {
   }
 
   const confirmarExclusao = (numeroEmpenho: string) => {
-    const possuiPagamentos = pagamentos.some((p) => p.numeroEmpenho === numeroEmpenho)
-    setTemPagamentos(possuiPagamentos)
+    const pagamentosDoEmpenho = pagamentosGlobais.filter(
+      (pagamento) => pagamento.numeroEmpenho === numeroEmpenho
+    )
+
+    setTemPagamentos(pagamentosDoEmpenho.length > 0)
     setEmpenhoSelecionado(numeroEmpenho)
     setModalDeleteOpen(true)
   }
@@ -175,7 +172,7 @@ export default function EmpenhosPage() {
       </button>
 
       <h1 className="text-2xl font-bold mb-2">
-        Empenhos da Despesa{' '}
+        Empenhos da Despesa
       </h1>
       <p className="text-blue-600 max-w-xs break-words pb-7 pt-0">
         {protocolo}
@@ -238,24 +235,24 @@ export default function EmpenhosPage() {
       </ul>
 
       <Modal isOpen={isModalOpen} onClose={() => { setIsModalOpen(false); resetForm() }}>
-        <h2 className="text-lg font-semibold mb-4">Cadastrar Novo Empenho</h2>
+        <h2 className="text-lg font-semibold mb-4 text-black">Cadastrar Novo Empenho</h2>
         <form onSubmit={handleSubmit} className="grid grid-cols-1 gap-4">
-          <label className="font-bold">Valor do Empenho</label>
+          <label className="font-bold text-black">Valor do Empenho</label>
           <input
             type="text"
             name="valorEmpenho"
             value={valor}
             onChange={handleValorChange}
-            className="border p-2"
+            className="border p-2 text-black"
             required
           />
 
-          <label className="font-bold">Observação</label>
+          <label className="font-bold text-black">Observação</label>
           <textarea
             name="observacao"
             value={formData.observacao}
             onChange={handleChange}
-            className="border p-2"
+            className="border p-2 text-black"
             required
           />
 
@@ -266,9 +263,9 @@ export default function EmpenhosPage() {
       </Modal>
 
       <Modal isOpen={modalDeleteOpen} onClose={() => setModalDeleteOpen(false)}>
-        {empenhoSelecionado && pagamentos.some((p) => p.numeroEmpenho === empenhoSelecionado) ? (
+        {empenhoSelecionado && temPagamentos ? (
           <div className="text-center">
-            <p className="mb-4">Não é possível excluir um empenho com um pagamento registrado.</p>
+            <p className="mb-4 text-black">Não é possível excluir um empenho com um pagamento registrado.</p>
             <button
               onClick={() => setModalDeleteOpen(false)}
               className="bg-blue-600 text-white px-4 py-2 rounded"
@@ -278,7 +275,7 @@ export default function EmpenhosPage() {
           </div>
         ) : (
           <div className="text-center">
-            <p className="mb-4">Tem certeza que deseja excluir esse empenho?</p>
+            <p className="mb-4 text-black">Tem certeza que deseja excluir esse empenho?</p>
             <div className="flex justify-center gap-4">
               <button onClick={excluirEmpenho} className="bg-red-600 text-white px-4 py-2 rounded">
                 Sim
